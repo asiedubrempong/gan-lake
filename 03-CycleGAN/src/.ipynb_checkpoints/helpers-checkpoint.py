@@ -12,12 +12,10 @@ warnings.filterwarnings("ignore")
 # import torch
 import torch
 
-
 # numpy & scipy imports
 import numpy as np
 import scipy
-import scipy.misc
-
+import imageio
 
 def checkpoint(iteration, G_XtoY, G_YtoX, D_X, D_Y, checkpoint_dir='checkpoints_cyclegan'):
     """Saves the parameters of both generators G_YtoX, G_XtoY and discriminators D_X, D_Y.
@@ -55,7 +53,7 @@ def to_data(x):
     if torch.cuda.is_available():
         x = x.cpu()
     x = x.data.numpy()
-    x = ((x +1) * 0.5).astype(np.uint8) # rescale to 0-255
+    x = ((x +1)*255 / (2)).astype(np.uint8) # rescale to 0-255
     return x
 
 def save_samples(iteration, fixed_Y, fixed_X, G_YtoX, G_XtoY, batch_size=16, sample_dir='../samples/summer2winter'):
@@ -70,12 +68,11 @@ def save_samples(iteration, fixed_Y, fixed_X, G_YtoX, G_XtoY, batch_size=16, sam
     X, fake_X = to_data(fixed_X), to_data(fake_X)
     Y, fake_Y = to_data(fixed_Y), to_data(fake_Y)
     
-    merged = merge_images(X, fake_Y, batch_size)
+    merged = (255 - merge_images(X, fake_Y, batch_size)).astype(np.uint8)
     path = os.path.join(sample_dir, 'sample-{:06d}-X-Y.png'.format(iteration))
-    scipy.misc.imsave(path, merged)
-    print('Saved {}'.format(path))
+    imageio.imwrite(path, merged)
     
-    merged = merge_images(Y, fake_X, batch_size)
+    merged = 255 - merge_images(Y, fake_X, batch_size).astype(np.uint8)
     path = os.path.join(sample_dir, 'sample-{:06d}-Y-X.png'.format(iteration))
-    scipy.misc.imsave(path, merged)
-    print('Saved {}'.format(path))
+    imageio.imwrite(path, merged)
+    
